@@ -23,12 +23,6 @@ ShadowDomKit is a lightweight JavaScript utility designed to solve the challenge
 <script src="path/to/ShadowDomKit.js"></script>
 ```
 
-### NPM Installation
-
-```bash
-npm install shadow-dom-kit
-```
-
 Then import in your JavaScript:
 
 ```javascript
