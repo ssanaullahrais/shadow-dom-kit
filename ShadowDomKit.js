@@ -1,5 +1,10 @@
 /**
- * ShadowDomKit.js - A lightweight utility for working with components in Shadow DOM
+ * ShadowDomKit.js v1.0.0 - A lightweight utility for working with components in Shadow DOM
+ * 
+ * @version 1.0.0
+ * @author Sunny
+ * @license MIT
+ * @see https://github.com/ssanaullahrais/shadow-dom-kit
  * 
  * This plugin makes it easy to:
  * 1. Find elements across Shadow DOM boundaries
