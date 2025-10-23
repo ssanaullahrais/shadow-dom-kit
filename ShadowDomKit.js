@@ -164,90 +164,6 @@
             this.log(`Registered component type: ${typeName}`);
         }
 
-        /**
-         * Initialize a Flowbite accordion
-         * @param {HTMLElement} element - The accordion element
-         * @param {ShadowRoot|Document} context - The DOM context
-         * @param {Object} options - Accordion options
-         * @returns {Object|null} - The initialized accordion instance or null
-         */
-        initFlowbiteAccordion(element, context, options = {}) {
-            const accordionId = element.id;
-            this.log(`Initializing Flowbite accordion: ${accordionId}`);
-            
-            // Helper function to find child elements
-            const findElement = (selector) => {
-                if (selector.includes(" ") || selector.includes(">")) {
-                    return context.querySelector(selector);
-                }
-                if (selector.startsWith("#")) {
-                    return context.getElementById(selector.substring(1));
-                }
-                return context.querySelector(selector);
-            };
-            
-            // Create accordion items with dynamic ID generation
-            const itemCount = options.itemCount || 3;
-            const accordionItems = [];
-            
-            for (let i = 1; i <= itemCount; i++) {
-                const item = {
-                    id: `${accordionId}-heading-${i}`,
-                    triggerEl: findElement(`#${accordionId}-heading-${i} button`),
-                    targetEl: findElement(`#${accordionId}-body-${i}`),
-                    active: i === 1 // First item active by default
-                };
-                
-                if (options.activeItem === i) {
-                    item.active = true;
-                } else if (options.activeItem !== undefined && options.activeItem !== i) {
-                    item.active = false;
-                }
-                
-                accordionItems.push(item);
-            }
-            
-            // Validate that all elements were found
-            const missingElements = accordionItems.filter(item => !item.triggerEl || !item.targetEl);
-            if (missingElements.length > 0) {
-                this.warn("Some accordion elements could not be found:", missingElements);
-            }
-            
-            // Default Flowbite options
-            const accordionOptions = {
-                alwaysOpen: options.alwaysOpen || false,
-                activeClasses: options.activeClasses || "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white",
-                inactiveClasses: options.inactiveClasses || "text-gray-500 dark:text-gray-400"
-            };
-            
-            // Try to initialize using various methods
-            try {
-                // Method 1: Global Flowbite instance
-                if (typeof flowbite !== "undefined" && typeof flowbite.Accordion !== "undefined") {
-                    this.log("Initializing via global flowbite object");
-                    return new flowbite.Accordion(element, accordionItems, accordionOptions);
-                }
-                
-                // Method 2: Direct Accordion class
-                if (typeof Accordion !== "undefined") {
-                    this.log("Initializing via global Accordion class");
-                    return new Accordion(element, accordionItems, accordionOptions);
-                }
-                
-                // Method 3: Try window.Accordion
-                if (typeof window !== "undefined" && typeof window.Accordion !== "undefined") {
-                    this.log("Initializing via window.Accordion");
-                    return new window.Accordion(element, accordionItems, accordionOptions);
-                }
-                
-                this.warn("Flowbite Accordion API not found. Accordion may not be fully functional.");
-                return null;
-            } catch (error) {
-                this.error("Error initializing accordion:", error);
-                return null;
-            }
-        }
-
         // PRIVATE METHODS
 
         /**
@@ -320,19 +236,10 @@
             if (this._initCallbacks[componentType]) {
                 return this._initCallbacks[componentType](element, context, options);
             }
-            
-            // Built-in component types
-            switch (componentType.toLowerCase()) {
-                case 'flowbite-accordion':
-                case 'accordion':
-                    return this.initFlowbiteAccordion(element, context, options);
-                    
-                // Add more built-in component initializers here
-                
-                default:
-                    this.warn(`Unknown component type: ${componentType}`);
-                    return null;
-            }
+
+            // No built-in component types - use registerComponentType() to add your own
+            this.warn(`Unknown component type: ${componentType}. Use registerComponentType() to register custom component types.`);
+            return null;
         }
     }
 
