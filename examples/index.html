@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDomKit - Examples</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 50px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 50px;
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .example-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        .example-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .example-card h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .example-card p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        .features {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        .features h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .features ul {
+            list-style: none;
+        }
+        .features li {
+            padding: 10px 0;
+            color: #666;
+            font-size: 16px;
+        }
+        .features li::before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .cta {
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 ShadowDomKit</h1>
+        <p class="subtitle">A lightweight utility for working with Shadow DOM</p>
+
+        <div class="features">
+            <h2>Why ShadowDomKit?</h2>
+            <ul>
+                <li>Find elements across Shadow DOM boundaries effortlessly</li>
+                <li>Initialize components inside Shadow DOM with ease</li>
+                <li>Zero dependencies - works anywhere</li>
+                <li>Framework agnostic - use with any library or vanilla JS</li>
+                <li>Simple, intuitive API</li>
+            </ul>
+        </div>
+
+        <h2 style="color: white; margin-bottom: 20px; text-align: center;">📚 Interactive Examples</h2>
+
+        <div class="examples-grid">
+            <a href="01-basic-usage.html" class="example-card">
+                <div class="example-number">1</div>
+                <h2>Basic Usage</h2>
+                <p>Learn how to find elements across Shadow DOM boundaries. Simple examples of finding elements by ID and selector.</p>
+            </a>
+
+            <a href="02-custom-component.html" class="example-card">
+                <div class="example-number">2</div>
+                <h2>Custom Component</h2>
+                <p>Create and register your own custom component types. See how to build a counter component in Shadow DOM.</p>
+            </a>
+
+            <a href="03-modal-dialog.html" class="example-card">
+                <div class="example-number">3</div>
+                <h2>Modal Dialog</h2>
+                <p>Build a fully functional modal dialog component. Learn event handling and component lifecycle management.</p>
+            </a>
+
+            <a href="04-multiple-components.html" class="example-card">
+                <div class="example-number">4</div>
+                <h2>Multiple Components</h2>
+                <p>Work with multiple components simultaneously. Includes tabs, tooltips, and toggles all working together.</p>
+            </a>
+        </div>
+
+        <div class="cta">
+            <a href="../readme.md" class="btn">📖 Read Full Documentation</a>
+        </div>
+    </div>
+</body>
+</html>

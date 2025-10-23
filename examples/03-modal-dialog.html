@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDomKit - Modal Dialog Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        button {
+            background: #6c63ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover { background: #5a52d5; }
+    </style>
+</head>
+<body>
+    <h1>ShadowDomKit - Modal Dialog</h1>
+
+    <div class="card">
+        <h2>Example: Modal Component in Shadow DOM</h2>
+        <p>Click the button below to open a modal that's encapsulated in Shadow DOM!</p>
+        <button id="open-modal-btn">Open Modal</button>
+    </div>
+
+    <!-- Shadow DOM Host for Modal -->
+    <div id="modal-host"></div>
+
+    <script src="../ShadowDomKit.js"></script>
+    <script>
+        // Create Shadow DOM for modal
+        const modalHost = document.getElementById('modal-host');
+        const shadowRoot = modalHost.attachShadow({ mode: 'open' });
+
+        shadowRoot.innerHTML = `
+            <style>
+                .modal-overlay {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 1000;
+                    justify-content: center;
+                    align-items: center;
+                }
+                .modal-overlay.open {
+                    display: flex;
+                }
+                .modal {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                    max-width: 500px;
+                    width: 90%;
+                    animation: slideIn 0.3s ease;
+                }
+                @keyframes slideIn {
+                    from {
+                        transform: translateY(-50px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+                .modal h2 {
+                    margin-top: 0;
+                    color: #333;
+                }
+                .modal p {
+                    color: #666;
+                    line-height: 1.6;
+                }
+                .modal-buttons {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                    margin-top: 20px;
+                }
+                button {
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                }
+                .btn-primary {
+                    background: #6c63ff;
+                    color: white;
+                }
+                .btn-primary:hover {
+                    background: #5a52d5;
+                }
+                .btn-secondary {
+                    background: #e0e0e0;
+                    color: #333;
+                }
+                .btn-secondary:hover {
+                    background: #d0d0d0;
+                }
+            </style>
+
+            <div class="modal-overlay" id="modal-overlay">
+                <div class="modal">
+                    <h2>Welcome to ShadowDomKit! 🎉</h2>
+                    <p>This modal is completely encapsulated in Shadow DOM. Its styles won't leak out, and global styles won't leak in!</p>
+                    <p>ShadowDomKit makes it easy to find and initialize components like this one, even when they're hidden behind Shadow DOM boundaries.</p>
+                    <div class="modal-buttons">
+                        <button class="btn-secondary" id="close-modal">Close</button>
+                        <button class="btn-primary" id="confirm-modal">Got it!</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Initialize ShadowDomKit
+        const shadowKit = new ShadowDomKit({ debug: true });
+
+        // Register modal component type
+        shadowKit.registerComponentType('modal', (element, context, options) => {
+            const overlay = element;
+            const closeBtn = context.querySelector('#close-modal');
+            const confirmBtn = context.querySelector('#confirm-modal');
+
+            // Modal API
+            const modal = {
+                open() {
+                    overlay.classList.add('open');
+                    console.log('✅ Modal opened');
+                    if (options.onOpen) options.onOpen();
+                },
+                close() {
+                    overlay.classList.remove('open');
+                    console.log('❌ Modal closed');
+                    if (options.onClose) options.onClose();
+                }
+            };
+
+            // Event listeners
+            closeBtn.addEventListener('click', () => modal.close());
+            confirmBtn.addEventListener('click', () => {
+                if (options.onConfirm) options.onConfirm();
+                modal.close();
+            });
+
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) modal.close();
+            });
+
+            // Close on ESC key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && overlay.classList.contains('open')) {
+                    modal.close();
+                }
+            });
+
+            return modal;
+        });
+
+        // Initialize the modal
+        let modalInstance;
+        shadowKit.initComponent({
+            elementId: 'modal-overlay',
+            componentType: 'modal',
+            options: {
+                onOpen: () => console.log('🎉 Modal opened!'),
+                onClose: () => console.log('👋 Modal closed!'),
+                onConfirm: () => console.log('✅ User confirmed!')
+            }
+        })
+        .then(modal => {
+            modalInstance = modal;
+            console.log('✅ Modal component initialized successfully!');
+
+            // Connect open button (outside Shadow DOM) to modal (inside Shadow DOM)
+            document.getElementById('open-modal-btn').addEventListener('click', () => {
+                modal.open();
+            });
+        })
+        .catch(error => {
+            console.error('❌ Failed to initialize modal:', error);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDomKit - Multiple Components Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ShadowDomKit - Multiple Components</h1>
+
+    <div class="card">
+        <h2>Example: Working with Multiple Components</h2>
+        <p>This example shows how to initialize multiple different components in Shadow DOM simultaneously.</p>
+    </div>
+
+    <div class="grid">
+        <!-- Tab Component -->
+        <div id="tabs-host"></div>
+
+        <!-- Tooltip Component -->
+        <div id="tooltip-host"></div>
+
+        <!-- Toggle Component -->
+        <div id="toggle-host"></div>
+    </div>
+
+    <script src="../ShadowDomKit.js"></script>
+    <script>
+        // Initialize ShadowDomKit
+        const shadowKit = new ShadowDomKit({ debug: true });
+
+        // 1. TABS COMPONENT
+        shadowKit.registerComponentType('tabs', (element, context, options) => {
+            const buttons = context.querySelectorAll('.tab-button');
+            const contents = context.querySelectorAll('.tab-content');
+
+            function showTab(index) {
+                buttons.forEach((btn, i) => {
+                    btn.classList.toggle('active', i === index);
+                });
+                contents.forEach((content, i) => {
+                    content.classList.toggle('active', i === index);
+                });
+            }
+
+            buttons.forEach((btn, index) => {
+                btn.addEventListener('click', () => showTab(index));
+            });
+
+            showTab(0); // Show first tab
+            return { showTab };
+        });
+
+        // 2. TOOLTIP COMPONENT
+        shadowKit.registerComponentType('tooltip', (element, context, options) => {
+            const trigger = context.querySelector('.tooltip-trigger');
+            const tooltip = context.querySelector('.tooltip-popup');
+
+            trigger.addEventListener('mouseenter', () => {
+                tooltip.classList.add('visible');
+            });
+
+            trigger.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+
+            return { element: tooltip };
+        });
+
+        // 3. TOGGLE COMPONENT
+        shadowKit.registerComponentType('toggle', (element, context, options) => {
+            const toggle = element;
+            let isOn = options.defaultState || false;
+
+            function setState(state) {
+                isOn = state;
+                toggle.classList.toggle('on', isOn);
+                const status = context.querySelector('.toggle-status');
+                status.textContent = isOn ? 'ON' : 'OFF';
+                if (options.onChange) options.onChange(isOn);
+            }
+
+            toggle.addEventListener('click', () => setState(!isOn));
+            setState(isOn);
+
+            return { setState, getState: () => isOn };
+        });
+
+        // Create Shadow DOM components
+        createTabsComponent();
+        createTooltipComponent();
+        createToggleComponent();
+
+        // Initialize all components in parallel
+        Promise.all([
+            shadowKit.initComponent({
+                elementId: 'tabs-container',
+                componentType: 'tabs'
+            }),
+            shadowKit.initComponent({
+                elementId: 'tooltip-container',
+                componentType: 'tooltip'
+            }),
+            shadowKit.initComponent({
+                elementId: 'toggle-switch',
+                componentType: 'toggle',
+                options: {
+                    defaultState: false,
+                    onChange: (state) => console.log('Toggle state changed:', state)
+                }
+            })
+        ])
+        .then(([tabs, tooltip, toggle]) => {
+            console.log('🎉 All components initialized!');
+            console.log('Tabs:', tabs);
+            console.log('Tooltip:', tooltip);
+            console.log('Toggle:', toggle);
+        })
+        .catch(error => {
+            console.error('❌ Failed to initialize components:', error);
+        });
+
+        // Component creation functions
+        function createTabsComponent() {
+            const host = document.getElementById('tabs-host');
+            const shadow = host.attachShadow({ mode: 'open' });
+            shadow.innerHTML = `
+                <style>
+                    .tabs-card {
+                        background: white;
+                        border-radius: 8px;
+                        padding: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .tabs-card h3 { margin-top: 0; color: #333; }
+                    .tab-buttons {
+                        display: flex;
+                        gap: 5px;
+                        border-bottom: 2px solid #e0e0e0;
+                        margin-bottom: 15px;
+                    }
+                    .tab-button {
+                        background: none;
+                        border: none;
+                        padding: 10px 20px;
+                        cursor: pointer;
+                        color: #666;
+                        border-bottom: 3px solid transparent;
+                        transition: all 0.3s;
+                    }
+                    .tab-button.active {
+                        color: #6c63ff;
+                        border-bottom-color: #6c63ff;
+                    }
+                    .tab-content {
+                        display: none;
+                        color: #666;
+                    }
+                    .tab-content.active { display: block; }
+                </style>
+                <div class="tabs-card">
+                    <h3>Tabs Component</h3>
+                    <div id="tabs-container">
+                        <div class="tab-buttons">
+                            <button class="tab-button">Home</button>
+                            <button class="tab-button">About</button>
+                            <button class="tab-button">Contact</button>
+                        </div>
+                        <div class="tab-content">Welcome to the home tab!</div>
+                        <div class="tab-content">This is the about section.</div>
+                        <div class="tab-content">Contact us here.</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createTooltipComponent() {
+            const host = document.getElementById('tooltip-host');
+            const shadow = host.attachShadow({ mode: 'open' });
+            shadow.innerHTML = `
+                <style>
+                    .tooltip-card {
+                        background: white;
+                        border-radius: 8px;
+                        padding: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .tooltip-card h3 { margin-top: 0; color: #333; }
+                    .tooltip-trigger {
+                        display: inline-block;
+                        background: #28a745;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                    }
+                    .tooltip-popup {
+                        display: none;
+                        background: #333;
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        margin-top: 10px;
+                    }
+                    .tooltip-popup.visible { display: block; }
+                </style>
+                <div class="tooltip-card">
+                    <h3>Tooltip Component</h3>
+                    <div id="tooltip-container">
+                        <div class="tooltip-trigger">Hover me!</div>
+                        <div class="tooltip-popup">This is a tooltip 💡</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createToggleComponent() {
+            const host = document.getElementById('toggle-host');
+            const shadow = host.attachShadow({ mode: 'open' });
+            shadow.innerHTML = `
+                <style>
+                    .toggle-card {
+                        background: white;
+                        border-radius: 8px;
+                        padding: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .toggle-card h3 { margin-top: 0; color: #333; }
+                    .toggle-switch {
+                        width: 60px;
+                        height: 30px;
+                        background: #ccc;
+                        border-radius: 15px;
+                        position: relative;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    }
+                    .toggle-switch::after {
+                        content: '';
+                        position: absolute;
+                        width: 26px;
+                        height: 26px;
+                        background: white;
+                        border-radius: 50%;
+                        top: 2px;
+                        left: 2px;
+                        transition: all 0.3s;
+                    }
+                    .toggle-switch.on {
+                        background: #28a745;
+                    }
+                    .toggle-switch.on::after {
+                        left: 32px;
+                    }
+                    .toggle-status {
+                        margin-top: 10px;
+                        font-weight: bold;
+                        color: #666;
+                    }
+                </style>
+                <div class="toggle-card">
+                    <h3>Toggle Component</h3>
+                    <div class="toggle-switch" id="toggle-switch"></div>
+                    <div class="toggle-status">OFF</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

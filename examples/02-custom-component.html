@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDomKit - Custom Component Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #218838; }
+        .counter {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ShadowDomKit - Custom Component</h1>
+
+    <div class="card">
+        <h2>Example: Register and Use Custom Components</h2>
+        <p>This shows how to register your own component types and initialize them in Shadow DOM.</p>
+    </div>
+
+    <!-- Shadow DOM Host for Counter -->
+    <div id="counter-host"></div>
+
+    <script src="../ShadowDomKit.js"></script>
+    <script>
+        // Create a simple Counter component
+        class Counter {
+            constructor(element, options = {}) {
+                this.element = element;
+                this.count = options.startValue || 0;
+                this.step = options.step || 1;
+                this.render();
+            }
+
+            increment() {
+                this.count += this.step;
+                this.render();
+            }
+
+            decrement() {
+                this.count -= this.step;
+                this.render();
+            }
+
+            reset() {
+                this.count = 0;
+                this.render();
+            }
+
+            render() {
+                this.element.querySelector('.counter').textContent = this.count;
+            }
+        }
+
+        // Create Shadow DOM
+        const counterHost = document.getElementById('counter-host');
+        const shadowRoot = counterHost.attachShadow({ mode: 'open' });
+
+        shadowRoot.innerHTML = `
+            <style>
+                .counter-card {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    text-align: center;
+                }
+                .counter {
+                    font-size: 72px;
+                    font-weight: bold;
+                    margin: 30px 0;
+                    color: white;
+                }
+                button {
+                    background: white;
+                    color: #667eea;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin: 5px;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+                button:hover {
+                    background: #f0f0f0;
+                }
+            </style>
+            <div class="counter-card">
+                <h2>Counter Component (Inside Shadow DOM)</h2>
+                <div class="counter" id="counter-display">0</div>
+                <div id="counter-controls">
+                    <button id="btn-decrement">-</button>
+                    <button id="btn-reset">Reset</button>
+                    <button id="btn-increment">+</button>
+                </div>
+            </div>
+        `;
+
+        // Initialize ShadowDomKit
+        const shadowKit = new ShadowDomKit({ debug: true });
+
+        // Register the Counter component type
+        shadowKit.registerComponentType('counter', (element, context, options) => {
+            const counter = new Counter(element, options);
+
+            // Set up event listeners
+            const incrementBtn = context.querySelector('#btn-increment');
+            const decrementBtn = context.querySelector('#btn-decrement');
+            const resetBtn = context.querySelector('#btn-reset');
+
+            incrementBtn.addEventListener('click', () => counter.increment());
+            decrementBtn.addEventListener('click', () => counter.decrement());
+            resetBtn.addEventListener('click', () => counter.reset());
+
+            console.log('✅ Counter initialized with options:', options);
+            return counter;
+        });
+
+        // Initialize the counter component inside Shadow DOM
+        shadowKit.initComponent({
+            elementId: 'counter-controls',
+            componentType: 'counter',
+            options: {
+                startValue: 0,
+                step: 5
+            }
+        })
+        .then(counter => {
+            console.log('🎉 Counter component ready!');
+            console.log('Counter instance:', counter);
+        })
+        .catch(error => {
+            console.error('❌ Failed to initialize counter:', error);
+        });
+    </script>
+</body>
+</html>

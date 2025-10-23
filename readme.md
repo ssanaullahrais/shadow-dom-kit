@@ -1,603 +1,491 @@
-# ShadowDomKit Documentation
+# 🎯 ShadowDomKit
 
-## Introduction
-
-ShadowDomKit is a lightweight, framework-agnostic JavaScript utility designed to solve the challenges of working with components inside Shadow DOM. It provides a simple, consistent API for finding elements and initializing JavaScript components across Shadow DOM boundaries.
+A lightweight, framework-agnostic JavaScript utility for working with Shadow DOM.
 
 **Zero dependencies. Works anywhere. Use with any framework or library.**
 
-## Table of Contents
+---
 
-- [Installation](#installation)
-- [Core Concepts](#core-concepts)
-- [API Reference](#api-reference)
-- [Usage Examples](#usage-examples)
-- [Advanced Usage](#advanced-usage)
-- [Troubleshooting](#troubleshooting)
-- [Best Practices](#best-practices)
-
-## Installation
-
-### Direct Script Include
+## 🚀 Quick Start
 
 ```html
-<!-- Include ShadowDomKit.js in your HTML -->
-<script src="path/to/ShadowDomKit.js"></script>
+<!-- Include the script -->
+<script src="ShadowDomKit.js"></script>
+
+<script>
+  // Initialize
+  const shadowKit = new ShadowDomKit({ debug: true });
+
+  // Find elements in Shadow DOM
+  const result = shadowKit.findElementById('my-element');
+  console.log(result.element);
+</script>
 ```
 
-### Module Import
+That's it! You can now find and work with elements inside Shadow DOM.
+
+---
+
+## 📚 Examples
+
+**[View Interactive Examples →](examples/)**
+
+We have ready-to-run HTML examples:
+
+- **[01-basic-usage.html](examples/01-basic-usage.html)** - Finding elements in Shadow DOM
+- **[02-custom-component.html](examples/02-custom-component.html)** - Building custom components
+- **[03-modal-dialog.html](examples/03-modal-dialog.html)** - Creating a modal dialog
+- **[04-multiple-components.html](examples/04-multiple-components.html)** - Working with multiple components
+
+Just open any example in your browser and see ShadowDomKit in action!
+
+---
+
+## 🎓 Simple Tutorial
+
+### Step 1: Find Elements
 
 ```javascript
-// ES6 import
-import ShadowDomKit from './ShadowDomKit.js';
+const shadowKit = new ShadowDomKit();
 
-// CommonJS
-const ShadowDomKit = require('./ShadowDomKit.js');
+// Find by ID across all Shadow DOM boundaries
+const result = shadowKit.findElementById('my-button');
+
+if (result) {
+  console.log('Found:', result.element);
+  console.log('Context:', result.context); // The ShadowRoot or Document
+}
+
+// Find multiple elements by selector
+const results = shadowKit.findElementsBySelector('.card');
+results.forEach(({ element, context }) => {
+  console.log('Found card:', element);
+});
 ```
 
-## Core Concepts
+### Step 2: Register Your Components
 
-### Shadow DOM Challenges
+```javascript
+// Register a component type once
+shadowKit.registerComponentType('counter', (element, context, options) => {
+  let count = options.startValue || 0;
 
-The Shadow DOM creates encapsulated DOM trees that are separate from the main document DOM. This encapsulation presents challenges when:
+  element.textContent = count;
+  element.addEventListener('click', () => {
+    count++;
+    element.textContent = count;
+  });
 
-1. Finding elements across Shadow DOM boundaries
-2. Initializing third-party JavaScript components that need to access elements inside Shadow DOM
-3. Working with dynamic Shadow DOM elements that might not be immediately available
+  return { count };
+});
+```
 
-### How ShadowDomKit Solves These Problems
+### Step 3: Initialize Components
 
-ShadowDomKit provides:
+```javascript
+// Use your registered component anywhere
+shadowKit.initComponent({
+  elementId: 'my-counter',
+  componentType: 'counter',
+  options: { startValue: 0 }
+})
+.then(counter => {
+  console.log('Counter initialized!');
+})
+.catch(error => {
+  console.error('Failed:', error);
+});
+```
 
-1. Methods to search for elements across all Shadow DOM boundaries
-2. A flexible component initialization system
-3. Promise-based API for handling timing and loading issues
-4. Customizable plugin architecture for working with any JavaScript library
+---
 
-## API Reference
+## 🛠️ API Reference
 
 ### Creating an Instance
 
 ```javascript
-const shadowKit = new ShadowDomKit(options);
+const shadowKit = new ShadowDomKit({
+  debug: false,      // Enable console logging
+  searchDelay: 300   // Wait time before searching (ms)
+});
 ```
-
-Options object properties:
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `debug` | Boolean | `false` | Enable debug logging |
-| `searchDelay` | Number | `300` | Delay in ms before searching for elements |
 
 ### Core Methods
 
 #### `findElementById(elementId, root)`
 
-Finds an element by ID across Shadow DOM boundaries.
+Find an element by ID anywhere in the DOM, including Shadow DOM.
 
 ```javascript
 const result = shadowKit.findElementById('my-element');
 // Returns: { element: HTMLElement, context: ShadowRoot|Document } or null
 ```
 
-Parameters:
-
-- `elementId` (String): The ID of the element to find
-- `root` (Document|ShadowRoot, optional): The root to start searching from. Defaults to `document`
-
 #### `findElementsBySelector(selector, root)`
 
-Finds all elements matching a CSS selector across Shadow DOM boundaries.
+Find all elements matching a selector, including those in Shadow DOM.
 
 ```javascript
-const results = shadowKit.findElementsBySelector('.my-class');
-// Returns: Array of { element: HTMLElement, context: ShadowRoot|Document }
+const results = shadowKit.findElementsBySelector('.card');
+// Returns: Array of { element, context } objects
 ```
-
-Parameters:
-
-- `selector` (String): CSS selector to match
-- `root` (Document|ShadowRoot, optional): The root to start searching from. Defaults to `document`
-
-#### `initComponent(config)`
-
-Initializes a component within Shadow DOM and returns a Promise.
-
-```javascript
-shadowKit.initComponent({
-    elementId: 'my-element',
-    customInit: (element, context, options) => {
-        // Your initialization code
-        return new MyComponent(element, options);
-    },
-    options: { /* component options */ }
-})
-.then(instance => console.log('Component initialized:', instance))
-.catch(error => console.error('Error:', error));
-```
-
-Configuration object properties:
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `elementId` | String | No* | ID of the element to initialize |
-| `selector` | String | No* | CSS selector to find element(s) |
-| `componentType` | String | No** | Type of component to initialize (must be registered first) |
-| `customInit` | Function | No** | Custom initialization function |
-| `options` | Object | No | Options to pass to the component |
-| `delay` | Number | No | Override search delay for this initialization |
-
-\* Either `elementId` or `selector` must be provided
-\** Either `componentType` or `customInit` must be provided
 
 #### `registerComponentType(typeName, initFunction)`
 
-Registers a custom component initializer that can be reused throughout your application.
+Register a component type that can be reused.
 
 ```javascript
-shadowKit.registerComponentType('my-component', (element, context, options) => {
-    // Initialize and return the component
-    return new MyComponent(element, options);
-});
-
-// Now you can use it by name
-shadowKit.initComponent({
-    elementId: 'my-element',
-    componentType: 'my-component',
-    options: { /* ... */ }
+shadowKit.registerComponentType('modal', (element, context, options) => {
+  // Your initialization code
+  return { /* your component API */ };
 });
 ```
 
-Parameters:
+#### `initComponent(config)`
 
-- `typeName` (String): Name of the component type
-- `initFunction` (Function): Function that initializes the component. Receives `element`, `context`, and `options` parameters
-
-### Utility Methods
-
-#### `log(...args)`
-
-Logs debug messages when debug is enabled.
-
-#### `warn(...args)`
-
-Logs warning messages.
-
-#### `error(...args)`
-
-Logs error messages.
-
-## Usage Examples
-
-### Basic Usage - Finding Elements
+Initialize a component inside Shadow DOM.
 
 ```javascript
-document.addEventListener("DOMContentLoaded", function() {
-    const shadowKit = new ShadowDomKit({ debug: true });
+shadowKit.initComponent({
+  elementId: 'my-element',        // ID to find (required if no selector)
+  selector: '.my-class',          // Selector to find (alternative to elementId)
+  componentType: 'modal',         // Registered type (required if no customInit)
+  customInit: (el, ctx, opts) => {}, // Custom init function (alternative to componentType)
+  options: { /* ... */ },         // Options passed to your component
+  delay: 300                      // Custom delay (optional)
+});
+```
 
-    // Find an element in Shadow DOM by ID
-    const result = shadowKit.findElementById('my-element');
-    if (result) {
-        console.log('Found element:', result.element);
-        console.log('In context:', result.context);
+---
 
-        // You can now manipulate the element
-        result.element.textContent = 'Updated content';
-    }
+## 💡 Real-World Examples
 
-    // Find multiple elements by selector
-    const results = shadowKit.findElementsBySelector('.card');
-    results.forEach(({ element, context }) => {
-        console.log('Found card:', element);
+### Example 1: Simple Counter
+
+```javascript
+shadowKit.registerComponentType('counter', (element, context, options) => {
+  let count = 0;
+  const display = element.querySelector('.count');
+  const btnInc = element.querySelector('.btn-inc');
+  const btnDec = element.querySelector('.btn-dec');
+
+  btnInc.addEventListener('click', () => {
+    count++;
+    display.textContent = count;
+  });
+
+  btnDec.addEventListener('click', () => {
+    count--;
+    display.textContent = count;
+  });
+
+  return { getCount: () => count };
+});
+
+// Use it
+shadowKit.initComponent({
+  elementId: 'counter-widget',
+  componentType: 'counter'
+});
+```
+
+### Example 2: Modal Dialog
+
+```javascript
+shadowKit.registerComponentType('modal', (element, context, options) => {
+  const modal = element;
+  const closeBtn = context.querySelector('.close-btn');
+
+  const api = {
+    open: () => modal.classList.add('open'),
+    close: () => modal.classList.remove('open')
+  };
+
+  closeBtn.addEventListener('click', api.close);
+
+  return api;
+});
+
+// Use it
+shadowKit.initComponent({
+  elementId: 'my-modal',
+  componentType: 'modal'
+}).then(modal => {
+  // Control the modal
+  document.getElementById('open-btn').addEventListener('click', () => {
+    modal.open();
+  });
+});
+```
+
+### Example 3: Tabs Component
+
+```javascript
+shadowKit.registerComponentType('tabs', (element, context, options) => {
+  const buttons = context.querySelectorAll('.tab-btn');
+  const contents = context.querySelectorAll('.tab-content');
+
+  function showTab(index) {
+    buttons.forEach((btn, i) => {
+      btn.classList.toggle('active', i === index);
     });
-});
-```
-
-### Using Custom Initialization Function
-
-```javascript
-// Initialize a datepicker component
-shadowKit.initComponent({
-    selector: '.datepicker',
-    customInit: (element, context, options) => {
-        const picker = new Pikaday({
-            field: element,
-            format: options.format || 'YYYY-MM-DD',
-            onSelect: options.onSelect
-        });
-
-        return picker;
-    },
-    options: {
-        format: 'MM/DD/YYYY',
-        onSelect: (date) => console.log('Selected:', date)
-    }
-});
-```
-
-### Registering and Using Custom Component Types
-
-```javascript
-// Register a chart component type
-shadowKit.registerComponentType('chart', (element, context, options) => {
-    return new Chart(element, {
-        type: options.type || 'bar',
-        data: options.data || {},
-        options: options.chartOptions || {}
+    contents.forEach((content, i) => {
+      content.style.display = i === index ? 'block' : 'none';
     });
-});
+  }
 
-// Register a custom dropdown component
-shadowKit.registerComponentType('dropdown', (element, context, options) => {
-    return new CustomDropdown(element, {
-        items: options.items || [],
-        multiSelect: options.multiSelect || false,
-        onChange: options.onChange
-    });
-});
+  buttons.forEach((btn, i) => {
+    btn.addEventListener('click', () => showTab(i));
+  });
 
-// Use the registered component types
-shadowKit.initComponent({
-    elementId: 'sales-chart',
-    componentType: 'chart',
-    options: {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar'],
-            datasets: [{
-                label: 'Sales',
-                data: [10, 20, 30]
-            }]
-        }
-    }
-});
-
-shadowKit.initComponent({
-    elementId: 'status-dropdown',
-    componentType: 'dropdown',
-    options: {
-        items: ['Active', 'Pending', 'Completed'],
-        onChange: (value) => console.log('Status changed:', value)
-    }
+  showTab(0); // Show first tab
+  return { showTab };
 });
 ```
 
-### Working with Multiple Components
+### Example 4: Multiple Components at Once
 
 ```javascript
 // Initialize multiple components in parallel
 Promise.all([
-    shadowKit.initComponent({
-        elementId: 'chart-1',
-        componentType: 'chart'
-    }),
-    shadowKit.initComponent({
-        elementId: 'dropdown-1',
-        componentType: 'dropdown'
-    }),
-    shadowKit.initComponent({
-        selector: '.datepickers',
-        customInit: (el) => new Pikaday({ field: el })
-    })
+  shadowKit.initComponent({ elementId: 'modal-1', componentType: 'modal' }),
+  shadowKit.initComponent({ elementId: 'tabs-1', componentType: 'tabs' }),
+  shadowKit.initComponent({ elementId: 'counter-1', componentType: 'counter' })
 ])
-.then(results => {
-    console.log('All components initialized:', results);
-})
-.catch(error => {
-    console.error('Error initializing components:', error);
+.then(([modal, tabs, counter]) => {
+  console.log('All components ready!');
 });
 ```
-
-### Working with Modal Dialogs
-
-```javascript
-// Register a modal component
-shadowKit.registerComponentType('modal', (element, context, options) => {
-    const openButton = context.querySelector(options.openButtonSelector);
-    const closeButton = element.querySelector(options.closeButtonSelector);
-
-    openButton?.addEventListener('click', () => {
-        element.classList.add('open');
-    });
-
-    closeButton?.addEventListener('click', () => {
-        element.classList.remove('open');
-    });
-
-    return {
-        open: () => element.classList.add('open'),
-        close: () => element.classList.remove('open')
-    };
-});
-
-// Initialize modal
-shadowKit.initComponent({
-    elementId: 'my-modal',
-    componentType: 'modal',
-    options: {
-        openButtonSelector: '#open-modal-btn',
-        closeButtonSelector: '.close-btn'
-    }
-}).then(modal => {
-    // You can control the modal programmatically
-    setTimeout(() => modal.open(), 3000);
-});
-```
-
-## Advanced Usage
-
-### Working with Dynamic Content
-
-```javascript
-// Function to initialize components when content is loaded dynamically
-function initDynamicComponents() {
-    shadowKit.initComponent({
-        elementId: 'dynamic-component',
-        componentType: 'custom-widget',
-        // Increase delay for dynamic content
-        delay: 500
-    });
-}
-
-// Add event listener for content loading
-document.addEventListener('content-loaded', initDynamicComponents);
-
-// Or call after AJAX completes
-fetch('/api/content')
-    .then(response => response.json())
-    .then(data => {
-        // Update DOM with new content
-        document.getElementById('container').innerHTML = data.html;
-
-        // Initialize components in new content
-        initDynamicComponents();
-    });
-```
-
-### Creating a Plugin for React
-
-```javascript
-// Example React Hook
-import { useState, useCallback, useEffect } from 'react';
-
-function useShadowDomKit(options = {}) {
-    const [shadowKit] = useState(() => new ShadowDomKit({
-        debug: options.debug || false
-    }));
-
-    const initComponent = useCallback((config) => {
-        return shadowKit.initComponent(config);
-    }, [shadowKit]);
-
-    const findElement = useCallback((id) => {
-        return shadowKit.findElementById(id);
-    }, [shadowKit]);
-
-    return { shadowKit, initComponent, findElement };
-}
-
-// Usage in a React component
-function MyComponent() {
-    const { initComponent } = useShadowDomKit({ debug: true });
-
-    useEffect(() => {
-        initComponent({
-            elementId: 'my-widget',
-            customInit: (element, context, options) => {
-                return new CustomWidget(element, options);
-            },
-            options: { theme: 'dark' }
-        });
-    }, [initComponent]);
-
-    return <div id="my-widget">...</div>;
-}
-```
-
-### Creating a Plugin for Vue
-
-```javascript
-// Vue 3 Composable
-import { onMounted, ref } from 'vue';
-
-export function useShadowDomKit(options = {}) {
-    const shadowKit = ref(new ShadowDomKit(options));
-    const isReady = ref(false);
-
-    onMounted(() => {
-        isReady.value = true;
-    });
-
-    const initComponent = async (config) => {
-        if (!isReady.value) {
-            await new Promise(resolve => {
-                const interval = setInterval(() => {
-                    if (isReady.value) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 50);
-            });
-        }
-        return shadowKit.value.initComponent(config);
-    };
-
-    return {
-        shadowKit: shadowKit.value,
-        initComponent
-    };
-}
-
-// Usage in Vue component
-export default {
-    setup() {
-        const { initComponent } = useShadowDomKit({ debug: true });
-
-        onMounted(() => {
-            initComponent({
-                elementId: 'my-widget',
-                componentType: 'custom-widget'
-            });
-        });
-    }
-}
-```
-
-### Integrating with Third-Party Libraries
-
-```javascript
-// Example: Integrating with Choices.js (select dropdown library)
-shadowKit.registerComponentType('select-enhanced', (element, context, options) => {
-    return new Choices(element, {
-        searchEnabled: options.searchEnabled !== false,
-        removeItemButton: options.removeItems || false,
-        ...options.choicesOptions
-    });
-});
-
-// Example: Integrating with Sortable.js (drag and drop)
-shadowKit.registerComponentType('sortable-list', (element, context, options) => {
-    return new Sortable(element, {
-        animation: 150,
-        onEnd: options.onEnd,
-        ...options.sortableOptions
-    });
-});
-
-// Example: Integrating with Quill (rich text editor)
-shadowKit.registerComponentType('rich-editor', (element, context, options) => {
-    return new Quill(element, {
-        theme: options.theme || 'snow',
-        modules: options.modules || {
-            toolbar: [['bold', 'italic'], ['link', 'image']]
-        }
-    });
-});
-```
-
-## Troubleshooting
-
-### Common Issues and Solutions
-
-#### Component Not Found
-
-**Problem**: `Element with ID "my-element" not found in any DOM context.`
-
-**Solutions**:
-- Verify the element ID is correct
-- Increase the `searchDelay` option to give more time for the DOM to load
-- Check if the element is dynamically created after initialization
-- Use browser DevTools to verify the element exists in the Shadow DOM
-
-#### Component Library Not Available
-
-**Problem**: Component initialization fails because the library is not loaded
-
-**Solutions**:
-- Ensure the component library is loaded before ShadowDomKit initialization
-- Check for any JavaScript errors that might prevent the library from loading
-- Use browser console to verify the library is available in the global scope
-- Consider wrapping initialization in a check: `if (typeof MyLibrary !== 'undefined')`
-
-#### Shadow DOM Not Accessible
-
-**Problem**: Elements inside Shadow DOM can't be found even though they exist
-
-**Solutions**:
-- Check if the Shadow DOM is closed (mode: 'closed') - closed Shadow DOM is not accessible
-- Ensure there are no Cross-Origin restrictions
-- Verify the Shadow DOM is fully initialized before searching
-- Use `debug: true` to see detailed search logs
-
-#### Timing Issues
-
-**Problem**: Components initialize before the DOM is ready
-
-**Solutions**:
-- Increase the `searchDelay` option
-- Use `delay` parameter in `initComponent` for specific components
-- Wrap initialization in `DOMContentLoaded` or framework lifecycle hooks
-- Consider using MutationObserver for truly dynamic content
-
-### Debugging
-
-Enable debug mode to see detailed logs:
-
-```javascript
-const shadowKit = new ShadowDomKit({ debug: true });
-```
-
-This will output detailed information about:
-- Element search process
-- Shadow DOM traversal
-- Component initialization
-- Any errors or warnings encountered
-
-## Best Practices
-
-### Performance Optimization
-
-1. **Be Specific with Selectors**: Use IDs instead of complex CSS selectors when possible
-2. **Cache Results**: Store results of `findElementById` if you need to reference the same element multiple times
-3. **Batch Initializations**: Use `Promise.all` with multiple `initComponent` calls
-4. **Register Component Types**: Use `registerComponentType` instead of repeating `customInit` functions
-
-```javascript
-// Good - Register once, use many times
-shadowKit.registerComponentType('dropdown', initDropdown);
-
-// Bad - Repeating the same initialization function
-shadowKit.initComponent({ elementId: 'dd1', customInit: initDropdown });
-shadowKit.initComponent({ elementId: 'dd2', customInit: initDropdown });
-```
-
-### Component Organization
-
-1. **Register All Component Types Early**: Register custom component types at application startup
-2. **Use Consistent Naming**: Establish a convention for component type names (e.g., 'chart', 'modal', 'dropdown')
-3. **Document Component Options**: Maintain documentation for the options each component type accepts
-4. **Create a Component Registry**: Keep all component registrations in one central file
-
-```javascript
-// components.js - Central registry
-export function registerAllComponents(shadowKit) {
-    shadowKit.registerComponentType('chart', initChart);
-    shadowKit.registerComponentType('modal', initModal);
-    shadowKit.registerComponentType('dropdown', initDropdown);
-    shadowKit.registerComponentType('datepicker', initDatepicker);
-}
-
-// app.js
-import { registerAllComponents } from './components.js';
-const shadowKit = new ShadowDomKit({ debug: true });
-registerAllComponents(shadowKit);
-```
-
-### Integration Tips
-
-1. **CMS Integration**: For WordPress, Drupal, or other CMS platforms, wrap ShadowDomKit in a dedicated plugin/module
-2. **Framework Integration**: Create custom hooks (React), composables (Vue), or services (Angular)
-3. **Build Process**: Include ShadowDomKit in your build process to ensure single version
-4. **Error Handling**: Always use `.catch()` with `initComponent` to handle failures gracefully
-5. **TypeScript**: Consider creating type definitions for better IDE support
-
-### Security Considerations
-
-1. **Validate Inputs**: Always validate options passed to component initializers
-2. **Sanitize Content**: If injecting HTML, ensure it's properly sanitized
-3. **Cross-Origin**: Be aware of cross-origin restrictions when working with iframes
-4. **Closed Shadow DOM**: Respect closed Shadow DOM boundaries - they exist for security reasons
 
 ---
 
-## Contributing
+## 🎨 Framework Integration
 
-ShadowDomKit is open for contributions! Whether it's bug fixes, new features, or documentation improvements, all contributions are welcome.
+### React
 
-## License
+```javascript
+import { useState, useEffect } from 'react';
 
-MIT License
+function useComponent(config) {
+  const [component, setComponent] = useState(null);
 
-## Support
+  useEffect(() => {
+    const shadowKit = new ShadowDomKit();
+    shadowKit.initComponent(config).then(setComponent);
+  }, []);
 
-For issues, questions, or feature requests, please visit the GitHub repository.
+  return component;
+}
+
+// Usage
+function MyComponent() {
+  const modal = useComponent({
+    elementId: 'my-modal',
+    componentType: 'modal'
+  });
+
+  return <div id="my-modal">...</div>;
+}
+```
+
+### Vue
+
+```javascript
+export default {
+  mounted() {
+    const shadowKit = new ShadowDomKit();
+    shadowKit.initComponent({
+      elementId: 'my-modal',
+      componentType: 'modal'
+    }).then(modal => {
+      this.modal = modal;
+    });
+  }
+}
+```
+
+### Vanilla JavaScript
+
+```javascript
+document.addEventListener('DOMContentLoaded', () => {
+  const shadowKit = new ShadowDomKit({ debug: true });
+
+  // Register all your components
+  shadowKit.registerComponentType('modal', initModal);
+  shadowKit.registerComponentType('tabs', initTabs);
+  shadowKit.registerComponentType('counter', initCounter);
+
+  // Initialize them
+  shadowKit.initComponent({ elementId: 'app-modal', componentType: 'modal' });
+  shadowKit.initComponent({ elementId: 'app-tabs', componentType: 'tabs' });
+});
+```
+
+---
+
+## 🔧 Use Cases
+
+- **Web Components** - Find and initialize elements inside custom elements
+- **WordPress Plugins** - Work with Shadow DOM in block editor
+- **Browser Extensions** - Access Shadow DOM in injected content
+- **Component Libraries** - Initialize third-party components in Shadow DOM
+- **Dynamic Content** - Handle components loaded via AJAX/fetch
+- **Micro-frontends** - Manage isolated component trees
+
+---
+
+## 🐛 Troubleshooting
+
+### Element Not Found
+
+**Problem:** `Element with ID "my-element" not found`
+
+**Solutions:**
+- Check the element ID is correct
+- Increase `searchDelay` to wait for DOM to load
+- Use `debug: true` to see search logs
+
+```javascript
+const shadowKit = new ShadowDomKit({
+  debug: true,
+  searchDelay: 500  // Wait longer
+});
+```
+
+### Component Won't Initialize
+
+**Problem:** Component initialization fails
+
+**Solutions:**
+- Make sure the element exists before calling `initComponent`
+- Check if you registered the component type
+- Use `.catch()` to see the error
+
+```javascript
+shadowKit.initComponent({
+  elementId: 'my-element',
+  componentType: 'modal'
+})
+.catch(error => {
+  console.error('Failed:', error);
+});
+```
+
+### Shadow DOM is Closed
+
+**Problem:** Can't access closed Shadow DOM
+
+**Solution:** Closed Shadow DOM (`mode: 'closed'`) cannot be accessed by JavaScript. Use `mode: 'open'` instead:
+
+```javascript
+// Good
+element.attachShadow({ mode: 'open' });
+
+// Can't be accessed
+element.attachShadow({ mode: 'closed' });
+```
+
+---
+
+## ⚡ Best Practices
+
+### 1. Register Components Early
+
+```javascript
+// Good - Register at startup
+const shadowKit = new ShadowDomKit();
+shadowKit.registerComponentType('modal', initModal);
+shadowKit.registerComponentType('tabs', initTabs);
+
+// Bad - Repeating custom functions
+shadowKit.initComponent({ elementId: 'modal-1', customInit: initModal });
+shadowKit.initComponent({ elementId: 'modal-2', customInit: initModal });
+```
+
+### 2. Use IDs for Better Performance
+
+```javascript
+// Good - Fast lookup
+shadowKit.findElementById('my-element');
+
+// Slower - Has to traverse more
+shadowKit.findElementsBySelector('#my-element');
+```
+
+### 3. Handle Errors
+
+```javascript
+// Always use .catch()
+shadowKit.initComponent(config)
+  .then(component => { /* success */ })
+  .catch(error => { /* handle error */ });
+```
+
+### 4. Enable Debug During Development
+
+```javascript
+const shadowKit = new ShadowDomKit({
+  debug: process.env.NODE_ENV === 'development'
+});
+```
+
+---
+
+## 📦 Installation
+
+### Direct Download
+
+Download `ShadowDomKit.js` and include it:
+
+```html
+<script src="path/to/ShadowDomKit.js"></script>
+```
+
+### ES6 Module
+
+```javascript
+import ShadowDomKit from './ShadowDomKit.js';
+```
+
+### CommonJS
+
+```javascript
+const ShadowDomKit = require('./ShadowDomKit.js');
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's:
+- Bug fixes
+- New features
+- Documentation improvements
+- Example additions
+
+Feel free to open issues and pull requests.
+
+---
+
+## 📄 License
+
+MIT License - use it anywhere, for anything!
+
+---
+
+## 🌟 Why ShadowDomKit?
+
+Shadow DOM is powerful but can be tricky to work with. ShadowDomKit solves this by:
+
+- ✅ **Simple API** - Just a few methods to learn
+- ✅ **No Dependencies** - Pure JavaScript, works anywhere
+- ✅ **Framework Agnostic** - Use with React, Vue, Angular, or vanilla JS
+- ✅ **Lightweight** - Tiny footprint, big functionality
+- ✅ **Well Documented** - Lots of examples and clear docs
+- ✅ **Production Ready** - Tested and reliable
+
+---
+
+**[View Examples →](examples/)** | **[GitHub →](https://github.com/ssanaullahrais/shadow-dom-kit)**
+
+Made with ❤️ for the web development community
