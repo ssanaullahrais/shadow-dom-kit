@@ -55,8 +55,10 @@
     <script>
         // Create a simple Counter component
         class Counter {
-            constructor(element, options = {}) {
+            constructor(element, context, options = {}) {
                 this.element = element;
+                this.context = context;
+                this.display = context.querySelector('#counter-display');
                 this.count = options.startValue || 0;
                 this.step = options.step || 1;
                 this.render();
@@ -78,7 +80,7 @@
             }
 
             render() {
-                this.element.querySelector('.counter').textContent = this.count;
+                this.display.textContent = this.count;
             }
         }
 
@@ -132,7 +134,7 @@
 
         // Register the Counter component type
         shadowKit.registerComponentType('counter', (element, context, options) => {
-            const counter = new Counter(element, options);
+            const counter = new Counter(element, context, options);
 
             // Set up event listeners
             const incrementBtn = context.querySelector('#btn-increment');
