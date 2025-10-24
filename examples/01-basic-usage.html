@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShadowDomKit - Basic Usage Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        #result {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            min-height: 30px;
+        }
+        .highlight {
+            background: #ffeb3b !important;
+            border: 2px solid #fbc02d;
+        }
+    </style>
+</head>
+<body>
+    <h1>ShadowDomKit - Basic Usage</h1>
+
+    <div class="card">
+        <h2>Example: Finding Elements in Shadow DOM</h2>
+        <p>This example shows how to find elements across Shadow DOM boundaries.</p>
+
+        <button onclick="findElement()">Find Element by ID</button>
+        <button onclick="findMultiple()">Find Multiple Elements</button>
+        <button onclick="highlightElement()">Highlight Shadow Element</button>
+
+        <div id="result"></div>
+    </div>
+
+    <!-- Regular DOM element -->
+    <div class="card">
+        <h2>Regular DOM Content</h2>
+        <p id="regular-element">I'm in the regular DOM</p>
+    </div>
+
+    <!-- Shadow DOM Host -->
+    <div id="shadow-host"></div>
+
+    <script src="../ShadowDomKit.js"></script>
+    <script>
+        // Create a Shadow DOM component
+        const shadowHost = document.getElementById('shadow-host');
+        const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+
+        shadowRoot.innerHTML = `
+            <style>
+                .shadow-card {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }
+                .shadow-card h2 { color: white; }
+                .shadow-card p { font-size: 16px; }
+            </style>
+            <div class="shadow-card">
+                <h2>Shadow DOM Content</h2>
+                <p id="shadow-element">I'm inside Shadow DOM!</p>
+                <p class="shadow-text">You can't access me with normal querySelector</p>
+            </div>
+        `;
+
+        // Initialize ShadowDomKit
+        const shadowKit = new ShadowDomKit({ debug: true });
+
+        function findElement() {
+            const result = shadowKit.findElementById('shadow-element');
+            if (result) {
+                document.getElementById('result').innerHTML =
+                    `✅ Found element: "${result.element.textContent}"<br>
+                     📍 Context: ${result.context.constructor.name}`;
+            } else {
+                document.getElementById('result').innerHTML = '❌ Element not found';
+            }
+        }
+
+        function findMultiple() {
+            const results = shadowKit.findElementsBySelector('.shadow-text');
+            document.getElementById('result').innerHTML =
+                `✅ Found ${results.length} element(s)<br>
+                 ${results.map((r, i) => `${i + 1}. "${r.element.textContent}"`).join('<br>')}`;
+        }
+
+        function highlightElement() {
+            const result = shadowKit.findElementById('shadow-element');
+            if (result) {
+                result.element.classList.add('highlight');
+                document.getElementById('result').innerHTML =
+                    '✨ Element highlighted! (Check the purple card above)';
+
+                setTimeout(() => {
+                    result.element.classList.remove('highlight');
+                }, 3000);
+            }
+        }
+
+        // Show console output
+        console.log('ShadowDomKit initialized!');
+        console.log('Try clicking the buttons above to see it in action.');
+    </script>
+</body>
+</html>
